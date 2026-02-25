@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../utils/config';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -171,7 +172,7 @@ const TrackProduct = () => {
             const statusMap = ["Created", "In Transit", "In Warehouse", "Delivered"];
             const getRole = async (addr) => {
                 try {
-                    const res = await fetch(`http://localhost:5001/api/users/${addr}`);
+                    const res = await fetch(`${API_URL}/api/users/${addr}`);
                     if (res.ok) {
                         const data = await res.json();
                         return data.role;

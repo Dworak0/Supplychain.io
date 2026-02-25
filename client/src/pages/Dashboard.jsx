@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion } from 'framer-motion';
+import { API_URL } from '../utils/config';
 
 const Dashboard = () => {
     const { contract, currentAccount, currentUser, getLocation } = useContext(BlockchainContext);
@@ -110,7 +111,7 @@ const Dashboard = () => {
         const data = new FormData();
         data.append('image', image);
         try {
-            const response = await fetch('http://localhost:5001/api/upload', { method: 'POST', body: data });
+            const response = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: data });
             const res = await response.json();
             return res.imageUrl;
         } catch (error) {
@@ -124,7 +125,7 @@ const Dashboard = () => {
         const data = new FormData();
         data.append('image', certificateFile); // Using same endpoint/field 'image' for simplicity as server accepts it
         try {
-            const response = await fetch('http://localhost:5001/api/upload', { method: 'POST', body: data });
+            const response = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: data });
             const result = await response.json();
             return result.imageUrl;
         } catch (error) {

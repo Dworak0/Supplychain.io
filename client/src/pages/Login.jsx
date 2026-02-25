@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion } from 'framer-motion';
+import { API_URL } from '../utils/config';
 
 const Login = () => {
     const { loginUser } = useContext(BlockchainContext);
@@ -20,7 +21,7 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5001/api/login', {
+            const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -49,7 +50,7 @@ const Login = () => {
             const address = accounts[0];
 
             if (address) {
-                const response = await fetch('http://localhost:5001/api/login/metamask', {
+                const response = await fetch(`${API_URL}/api/login/metamask`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ walletAddress: address })

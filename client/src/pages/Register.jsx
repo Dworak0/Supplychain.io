@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion } from 'framer-motion';
+import { API_URL } from '../utils/config';
 
 const Register = () => {
     const { loginUser } = useContext(BlockchainContext);
@@ -63,7 +64,8 @@ const Register = () => {
 
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5001/api/register', {
+
+            const response = await fetch(`${API_URL}/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
