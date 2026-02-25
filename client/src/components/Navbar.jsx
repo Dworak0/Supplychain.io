@@ -23,11 +23,11 @@ const Navbar = () => {
             minHeight: '70px',
             boxSizing: 'border-box'
         }}>
-            <div 
+            <div
                 onClick={() => navigate('/')}
-                style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '0.75rem',
                     cursor: 'pointer'
                 }}
@@ -42,8 +42,8 @@ const Navbar = () => {
                     justifyContent: 'center',
                     fontSize: '1.25rem'
                 }}>🔗</div>
-                <h1 style={{ 
-                    fontSize: '1.5rem', 
+                <h1 style={{
+                    fontSize: '1.5rem',
                     fontWeight: 700,
                     background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
                     WebkitBackgroundClip: 'text',
@@ -55,22 +55,24 @@ const Navbar = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                <Link 
-                    to="/" 
-                    style={{ 
-                        color: 'var(--color-text)',
-                        fontWeight: 500,
-                        fontSize: '0.9375rem',
-                        transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.color = 'var(--color-primary)'}
-                    onMouseLeave={(e) => e.target.style.color = 'var(--color-text)'}
-                >
-                    Dashboard
-                </Link>
-                <Link 
-                    to="/track" 
-                    style={{ 
+                {currentUser && (
+                    <Link
+                        to="/dashboard"
+                        style={{
+                            color: 'var(--color-text)',
+                            fontWeight: 500,
+                            fontSize: '0.9375rem',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = 'var(--color-primary)'}
+                        onMouseLeave={(e) => e.target.style.color = 'var(--color-text)'}
+                    >
+                        Dashboard
+                    </Link>
+                )}
+                <Link
+                    to="/track"
+                    style={{
                         color: 'var(--color-text-muted)',
                         fontWeight: 500,
                         fontSize: '0.9375rem',
@@ -81,19 +83,21 @@ const Navbar = () => {
                 >
                     Track Product
                 </Link>
-                <Link 
-                    to="/admin" 
-                    style={{ 
-                        color: 'var(--color-text-muted)',
-                        fontWeight: 500,
-                        fontSize: '0.9375rem',
-                        transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.color = 'var(--color-primary)'}
-                    onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}
-                >
-                    Admin
-                </Link>
+                {currentUser && (
+                    <Link
+                        to="/admin"
+                        style={{
+                            color: 'var(--color-text-muted)',
+                            fontWeight: 500,
+                            fontSize: '0.9375rem',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = 'var(--color-primary)'}
+                        onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}
+                    >
+                        Admin
+                    </Link>
+                )}
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

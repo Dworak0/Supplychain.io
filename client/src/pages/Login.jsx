@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion } from 'framer-motion';
 
@@ -12,10 +12,13 @@ const Login = () => {
         password: '',
     });
 
+    const [loading, setLoading] = useState(false);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             const response = await fetch('http://localhost:5001/api/login', {
                 method: 'POST',
@@ -30,11 +33,39 @@ const Login = () => {
             navigate('/dashboard');
         } catch (error) {
             alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fillCredentials = (user, pass) => {
-        setFormData({ username: user, password: pass });
+    const handleMetaMaskLogin = async () => {
+        if (!window.ethereum) {
+            alert('MetaMask is not installed!');
+            return;
+        }
+        try {
+            setLoading(true);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const address = accounts[0];
+
+            if (address) {
+                const response = await fetch('http://localhost:5001/api/login/metamask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: address })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message);
+
+                loginUser(data.user);
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            alert(error.message || "Failed to login with MetaMask");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -60,7 +91,7 @@ const Login = () => {
                 }}
             >
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
+                    {/* <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div> */}
                     <h2 style={{
                         fontSize: '2rem',
                         fontWeight: 700,
@@ -98,81 +129,32 @@ const Login = () => {
                         />
                     </div>
 
-                    <button type="submit" className="btn-modern" style={{ marginTop: '0.5rem', width: '100%' }}>
-                        Sign In
+                    <button type="submit" disabled={loading} className="btn-modern" style={{ marginTop: '0.5rem', width: '100%' }}>
+                        {loading ? '...' : 'Sign In'}
                     </button>
                 </form>
-            </motion.div>
 
-            {/* Demo Credentials */}
-            <div style={{ width: '100%', maxWidth: '1000px' }}>
-                <p style={{
-                    textAlign: 'center',
-                    color: 'var(--color-text-muted)',
-                    marginBottom: '1.5rem',
-                    fontSize: '0.875rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    fontWeight: 600
-                }}>
-                    Click to Auto-Fill Demo Accounts
-                </p>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: '1rem'
-                }}>
-                    {[
-                        { role: 'Provider', user: 'provider', pass: 'pass', icon: '🌾', hint: 'Supplies Raw Materials' },
-                        { role: 'Manufacturer', user: 'manufacturer', pass: 'pass', icon: '🏭', hint: 'Creates products' },
-                        { role: 'Warehouse', user: 'warehouse', pass: 'pass', icon: '🏢', hint: 'Stores products' },
-                        { role: 'Supplier', user: 'supplier', pass: 'pass', icon: '🚚', hint: 'Distributes goods' },
-                        { role: 'Retailer', user: 'retailer', pass: 'pass', icon: '🏪', hint: 'Sells to End User' },
-                        { role: 'End User', user: 'enduser', pass: 'pass', icon: '🧑‍🍳', hint: 'Consumer' }
-                    ].map(cred => (
-                        <motion.div
-                            key={cred.role}
-                            whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-                            whileTap={{ scale: 0.95 }}
-                            className="glass-card"
-                            style={{
-                                padding: '1.25rem',
-                                cursor: 'pointer',
-                                textAlign: 'center',
-                                transition: 'background-color 0.2s'
-                            }}
-                            onClick={() => fillCredentials(cred.user, cred.pass)}
-                        >
-                            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{cred.icon}</div>
-                            <h4 style={{
-                                color: 'var(--color-text)',
-                                fontWeight: 600,
-                                marginBottom: '0.5rem',
-                                fontSize: '1rem'
-                            }}>
-                                {cred.role}
-                            </h4>
-                            <div>
-                                <div style={{
-                                    fontSize: '0.8125rem',
-                                    color: 'var(--color-text-muted)',
-                                    fontFamily: 'monospace'
-                                }}>
-                                    <div>{cred.user}</div>
-                                    <div style={{ marginTop: '0.25rem' }}>••••</div>
-                                </div>
-                                <p style={{
-                                    marginTop: '0.4rem',
-                                    fontSize: '0.75rem',
-                                    color: 'var(--color-text-muted)'
-                                }}>
-                                    {cred.hint}
-                                </p>
-                            </div>
-                        </motion.div>
-                    ))}
+                <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0', color: 'var(--color-text-muted)' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }}></div>
+                    <span style={{ padding: '0 1rem', fontSize: '0.85rem' }}>OR</span>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }}></div>
                 </div>
-            </div>
+
+                <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ width: '100%', padding: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={handleMetaMaskLogin}
+                    disabled={loading}
+                >
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" style={{ width: '20px' }} />
+                    Sign In with MetaMask
+                </button>
+
+                <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                    Don't have an account? <Link to="/register" style={{ color: 'var(--color-primary)' }}>Sign Up</Link>
+                </div>
+            </motion.div>
         </div>
     );
 };

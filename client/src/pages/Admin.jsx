@@ -17,7 +17,7 @@ const Admin = () => {
     const formatId = (id) => String(id).padStart(4, '0');
 
     const statusMap = ["Created", "In Transit", "In Warehouse", "Delivered"];
-    
+
     const getRoleFromAddress = (addr) => {
         const lowerAddr = addr.toLowerCase();
         if (lowerAddr === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266') return 'Manufacturer';
@@ -52,7 +52,7 @@ const Admin = () => {
                     const p = await contract.getProduct(i);
                     const statusIndex = Number(p.status);
                     const statusName = statusMap[statusIndex];
-                    
+
                     // Count by status
                     if (statusIndex === 0) statusCounts.created++;
                     else if (statusIndex === 1) statusCounts.inTransit++;
@@ -101,7 +101,7 @@ const Admin = () => {
     }, [contract]);
 
     const getStatusBadgeClass = (status) => {
-        switch(status) {
+        switch (status) {
             case 0: return 'badge-info';
             case 1: return 'badge-warning';
             case 2: return 'badge-info';
@@ -113,8 +113,8 @@ const Admin = () => {
     return (
         <div style={{ paddingTop: '120px', paddingBottom: '50px', maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
             <header style={{ marginBottom: '3rem' }}>
-                <h1 style={{ 
-                    fontSize: '2.5rem', 
+                <h1 style={{
+                    fontSize: '2.5rem',
                     fontWeight: 700,
                     marginBottom: '0.5rem',
                     color: 'var(--color-text)'
@@ -127,9 +127,9 @@ const Admin = () => {
             </header>
 
             {/* Statistics Cards */}
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '1.5rem',
                 marginBottom: '3rem'
             }}>
@@ -139,7 +139,7 @@ const Admin = () => {
                     className="modern-card"
                     style={{ padding: '1.5rem', textAlign: 'center' }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📦</div>
+                    {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></div> */}
                     <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
                         {stats.total}
                     </div>
@@ -153,7 +153,7 @@ const Admin = () => {
                     className="modern-card"
                     style={{ padding: '1.5rem', textAlign: 'center' }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+                    {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div> */}
                     <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
                         {stats.created}
                     </div>
@@ -167,7 +167,7 @@ const Admin = () => {
                     className="modern-card"
                     style={{ padding: '1.5rem', textAlign: 'center' }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚚</div>
+                    {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚚</div> */}
                     <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-warning)', marginBottom: '0.25rem' }}>
                         {stats.inTransit}
                     </div>
@@ -181,7 +181,7 @@ const Admin = () => {
                     className="modern-card"
                     style={{ padding: '1.5rem', textAlign: 'center' }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏢</div>
+                    {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏢</div> */}
                     <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
                         {stats.inWarehouse}
                     </div>
@@ -195,7 +195,7 @@ const Admin = () => {
                     className="modern-card"
                     style={{ padding: '1.5rem', textAlign: 'center' }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
+                    {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div> */}
                     <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-success)', marginBottom: '0.25rem' }}>
                         {stats.delivered}
                     </div>
@@ -208,13 +208,13 @@ const Admin = () => {
                 <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text)' }}>
                     All Products ({allProducts.length})
                 </h2>
-                <button 
+                <button
                     onClick={fetchAllProducts}
                     className="btn-modern"
                     disabled={loading}
                     style={{ padding: '0.75rem 1.5rem' }}
                 >
-                    {loading ? 'Loading...' : '🔄 Refresh'}
+                    {loading ? 'Loading...' : 'Refresh'}
                 </button>
             </div>
 
@@ -252,48 +252,48 @@ const Admin = () => {
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ 
+                                <tr style={{
                                     background: 'rgba(59, 130, 246, 0.1)',
                                     borderBottom: '2px solid var(--color-border)'
                                 }}>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'
                                     }}>ID</th>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'
                                     }}>Product Name</th>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'
                                     }}>Batch ID</th>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'
                                     }}>Current Owner</th>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'
                                     }}>Status</th>
-                                    <th style={{ 
-                                        padding: '1rem', 
-                                        textAlign: 'left', 
+                                    <th style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
                                         fontWeight: 600,
                                         color: 'var(--color-text)',
                                         fontSize: '0.875rem'

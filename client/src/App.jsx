@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import TrackProduct from './pages/TrackProduct';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Landing from './pages/Landing';
 import Admin from './pages/Admin';
 import { BlockchainContext } from './context/BlockchainContext';
@@ -25,6 +26,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/track" element={<TrackProduct />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>

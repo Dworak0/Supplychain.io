@@ -36,25 +36,12 @@ const Dashboard = () => {
 
     // STRICT SUPPLY CHAIN FLOW
     const supplyChainFlow = {
-        'Raw Material Supplier': 'Manufacturer',
+        'Provider': 'Manufacturer',
         'Manufacturer': 'Warehouse',
         'Warehouse': 'Supplier',
         'Supplier': 'Retailer',
         'Retailer': 'End User'
     };
-
-    // Pre-defined addresses for the demo
-    const roleWallets = {
-        'Raw Material Supplier': '0xcd3b766cCdD6Ae721141F452C550Ca635964ce71',
-        'Manufacturer': '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-        'Warehouse': '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-        'Supplier': '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc',
-        'Retailer': '0x90f79bf6eb2c4f870365e785982e1f101e93b906'
-    };
-
-    const isWalletMismatch = currentUser && currentAccount &&
-        roleWallets[currentUser.role] &&
-        currentAccount.toLowerCase() !== roleWallets[currentUser.role].toLowerCase();
 
     const statusMap = ["Created", "In Transit", "In Warehouse", "Delivered"];
     const formatId = (id) => String(id).padStart(4, '0');
@@ -153,8 +140,11 @@ const Dashboard = () => {
             setLoading(true);
             const { name, quantity, certificate, manufacturerAddress } = supplyData;
 
-            // Use predefined manufacturer address if input is empty/not provided, or generic handler
-            const target = manufacturerAddress || roleWallets['Manufacturer'];
+            if (!manufacturerAddress) {
+                setLoading(false);
+                return alert("Please enter the Manufacturer's Wallet Address.");
+            }
+            const target = manufacturerAddress;
 
             // Handle Certificate Upload
             let finalCertificate = certificate;
@@ -249,14 +239,11 @@ const Dashboard = () => {
             const nextRole = supplyChainFlow[currentUser.role];
             if (!nextRole) return alert("Your role cannot transfer products.");
 
-            let targetAddress = roleWallets[nextRole];
+            const targetAddress = transferData.customAddress;
 
-            if (nextRole === 'End User') {
-                if (!transferData.customAddress) {
-                    setLoading(false);
-                    return alert("Please enter the Buyer's Wallet Address for End User transfer.");
-                }
-                targetAddress = transferData.customAddress;
+            if (!targetAddress) {
+                setLoading(false);
+                return alert(`Please enter the ${nextRole}'s Wallet Address.`);
             }
 
             let statusInt = 0;
@@ -264,7 +251,7 @@ const Dashboard = () => {
             else if (nextRole === 'End User') statusInt = 3;
             else statusInt = 1;
 
-            if (!targetAddress) return alert("System Error: No wallet found for " + nextRole);
+            if (!targetAddress) return alert("System Error: No target wallet provided");
 
             const tx = await contract.transferProduct(productId, targetAddress, statusInt, location.lat, location.long);
             await tx.wait();
@@ -332,33 +319,6 @@ const Dashboard = () => {
                     {currentUser.role} Dashboard
                 </motion.h2>
 
-                {isWalletMismatch && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        style={{
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            border: '1px solid rgba(239, 68, 68, 0.5)',
-                            padding: '1rem 1.5rem',
-                            borderRadius: '12px',
-                            color: '#ef4444',
-                            marginBottom: '2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem'
-                        }}
-                    >
-                        <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-                        <div>
-                            <strong style={{ display: 'block' }}>Wallet Mismatch Detected</strong>
-                            <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                                Your connected wallet (<strong>{currentAccount.substring(0, 10)}...</strong>) does not match the expected address for the <strong>{currentUser.role}</strong> role.
-                                Please switch accounts in MetaMask to <strong>{roleWallets[currentUser.role].substring(0, 10)}...</strong> to perform actions.
-                            </span>
-                        </div>
-                    </motion.div>
-                )}
-
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div className="modern-card" style={{ padding: '1rem 2rem', display: 'inline-block' }}>
                         User: <span style={{ fontWeight: 'bold' }}>{currentUser.username}</span>
@@ -368,7 +328,7 @@ const Dashboard = () => {
             </header>
 
             {/* RAW MATERIAL SUPPLIER SECTION */}
-            {currentUser.role === 'Raw Material Supplier' && (
+            {currentUser.role === 'Provider' && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -398,9 +358,8 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Manufacturer Address (Optional)</label>
-                            <input type="text" name="manufacturerAddress" value={supplyData.manufacturerAddress} onChange={handleSupplyChange} className="modern-input" placeholder={roleWallets['Manufacturer']} />
-                            <small style={{ color: '#94a3b8' }}>Default: {roleWallets['Manufacturer']}</small>
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Manufacturer Address</label>
+                            <input type="text" name="manufacturerAddress" value={supplyData.manufacturerAddress} onChange={handleSupplyChange} className="modern-input" required placeholder="0x..." />
                         </div>
                         <button type="submit" disabled={loading} className="btn-modern" style={{ gridColumn: '1 / -1' }}>
                             {loading ? 'Processing (with Location)...' : 'Supply Material'}
@@ -491,7 +450,7 @@ const Dashboard = () => {
             )}
 
             {/* INVENTORY & TRANSFER (Standard for all) */}
-            {currentUser.role !== 'Raw Material Supplier' && (
+            {currentUser.role !== 'Provider' && (
                 <>
                     <h3 style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>My Inventory</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
@@ -543,9 +502,7 @@ const Dashboard = () => {
                                     Target: {nextDestination}
                                 </div>
 
-                                {nextDestination === 'End User' && (
-                                    <input type="text" name="customAddress" placeholder="Buyer Wallet Address" value={transferData.customAddress} onChange={handleTransferChange} className="modern-input" required />
-                                )}
+                                <input type="text" name="customAddress" placeholder={`${nextDestination} Wallet Address`} value={transferData.customAddress} onChange={handleTransferChange} className="modern-input" required />
 
                                 <button type="submit" disabled={loading} className="btn-modern">
                                     {loading ? 'Processing (with Location)...' : 'Transfer'}

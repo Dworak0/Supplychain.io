@@ -134,7 +134,7 @@ const TrackProduct = () => {
     }, [showScanner]);
 
     const fetchData = async (id) => {
-        if (!contract) return alert("Please connect wallet first (or ensure Localhost is open).");
+        if (!contract) return alert("Provider not initialized. Please refresh.");
 
         setLoading(true);
         setError('');
@@ -169,15 +169,17 @@ const TrackProduct = () => {
             setRawMaterials(materials);
 
             const statusMap = ["Created", "In Transit", "In Warehouse", "Delivered"];
-            const getRole = (addr) => {
-                const lowerAddr = addr.toLowerCase();
-                if (lowerAddr === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266') return 'Manufacturer'; // Default
-                if (lowerAddr === '0x70997970c51812dc3a010c7d01b50e0d17dc79c8') return 'Warehouse';
-                if (lowerAddr === '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc') return 'Supplier';
-                if (lowerAddr === '0x90f79bf6eb2c4f870365e785982e1f101e93b906') return 'Retailer';
-                // Check if unknown is Raw Material Supplier
-                if (lowerAddr === '0xcd3b766cCdD6Ae721141F452C550Ca635964ce71'.toLowerCase()) return 'Raw Material Supplier';
-                return 'End User / Unknown';
+            const getRole = async (addr) => {
+                try {
+                    const res = await fetch(`http://localhost:5001/api/users/${addr}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        return data.role;
+                    }
+                } catch (e) {
+                    console.error("Role fetch error:", e);
+                }
+                return 'Unknown / End User';
             };
 
             const normalized = {
@@ -190,14 +192,18 @@ const TrackProduct = () => {
             };
             setProductData(normalized);
 
-            const formattedHistory = history.map(item => ({
-                owner: item.owner,
-                role: getRole(item.owner),
-                status: statusMap[Number(item.status)],
-                timestamp: new Date(Number(item.timestamp) * 1000).toLocaleString(),
-                lat: item.lat,
-                long: item.long
-            }));
+            const formattedHistoryPromises = history.map(async (item) => {
+                const role = await getRole(item.owner);
+                return {
+                    owner: item.owner,
+                    role: role,
+                    status: statusMap[Number(item.status)],
+                    timestamp: new Date(Number(item.timestamp) * 1000).toLocaleString(),
+                    lat: item.lat,
+                    long: item.long
+                };
+            });
+            const formattedHistory = await Promise.all(formattedHistoryPromises);
             setHistoryData(formattedHistory);
 
             if (scanMeta && (scanMeta.name || scanMeta.batchId)) {
@@ -284,7 +290,7 @@ const TrackProduct = () => {
                             className="btn-modern"
                             style={{ padding: '1rem 2rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
                         >
-                            📸 Scan QR Code
+                            Scan QR Code
                         </motion.button>
                         <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', margin: '1rem 0' }}></div>
 

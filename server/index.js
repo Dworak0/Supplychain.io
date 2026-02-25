@@ -9,18 +9,14 @@ const app = express();
 const PORT = process.env.PORT || 5001; // Changed to 5001 to avoid AirPlay conflict
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
 
-// --- DATABASE HELPER FUNCTIONS (JSON FILE) ---
-const readDB = () => {
-    if (!fs.existsSync(DB_FILE)) {
-        fs.writeFileSync(DB_FILE, JSON.stringify({ users: [], products: [] }, null, 2));
-    }
-    const data = fs.readFileSync(DB_FILE);
-    return JSON.parse(data);
-};
+const mongoose = require('mongoose');
 
-const writeDB = (data) => {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-};
+// --- DATABASE CONNECTION ---
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB Connected Successfully'))
+    .catch(err => console.error('MongoDB Connection Error:', err));
+
+const User = require('./models/User');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
@@ -47,45 +43,89 @@ const upload = multer({ storage });
 // --- ROUTES ---
 
 app.get('/', (req, res) => {
-    res.send('API Running (JSON DB Mode)');
+    res.send('API Running (MongoDB Mode)');
 });
 
 // Auth Routes
-app.post('/api/register', (req, res) => {
-    const { username, password, role, walletAddress } = req.body;
+app.post('/api/register', async (req, res) => {
+    const { username, firstName, lastName, password, role, walletAddress } = req.body;
     try {
-        const db = readDB();
-        const existingUser = db.users.find(u => u.username === username);
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({ message: 'Username must be 3-20 characters long and can only contain letters, numbers, and underscores.' });
+        }
 
-        if (existingUser) return res.status(400).json({ message: 'User already exists' });
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.' });
+        }
 
-        const newUser = {
-            id: Date.now(),
+        const lowerWallet = walletAddress ? walletAddress.toLowerCase() : '';
+
+        let query = [{ username }];
+        if (lowerWallet !== '') {
+            query.push({ walletAddress: lowerWallet });
+        }
+
+        const existingUser = await User.findOne({ $or: query });
+
+        if (existingUser) {
+            if (existingUser.username === username) return res.status(400).json({ message: 'Username already exists' });
+            if (existingUser.walletAddress === lowerWallet) return res.status(400).json({ message: 'Wallet Address already linked to another account' });
+        }
+
+        const newUser = new User({
             username,
-            password, // In real app, hash this!
+            firstName,
+            lastName,
+            password,
             role,
-            walletAddress
-        };
+            walletAddress: lowerWallet
+        });
 
-        db.users.push(newUser);
-        writeDB(db);
+        await newUser.save();
 
-        res.json({ message: 'User registered successfully', user: newUser });
+        res.json({ message: 'User registered successfully', user: { username: newUser.username, firstName: newUser.firstName, lastName: newUser.lastName, role: newUser.role, walletAddress: newUser.walletAddress } });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message || 'Server error' });
+    }
+});
+
+app.post('/api/login/metamask', async (req, res) => {
+    const { walletAddress } = req.body;
+    try {
+        if (!walletAddress) return res.status(400).json({ message: 'Wallet address required' });
+
+        const user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+
+        if (!user) return res.status(404).json({ message: 'No account linked to this wallet' });
+
+        res.json({
+            message: 'Login successful',
+            user: {
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                walletAddress: user.walletAddress
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const db = readDB();
-        const user = db.users.find(u => u.username === username);
+        const user = await User.findOne({ username });
 
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        if (user.password !== password) {
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
@@ -93,12 +133,29 @@ app.post('/api/login', (req, res) => {
             message: 'Login successful',
             user: {
                 username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 role: user.role,
                 walletAddress: user.walletAddress
             }
         });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// User Info Route
+app.get('/api/users/:address', async (req, res) => {
+    try {
+        const user = await User.findOne({ walletAddress: req.params.address.toLowerCase() });
+
+        if (user) {
+            res.json({ role: user.role, name: `${user.firstName} ${user.lastName}` || user.username });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
 });

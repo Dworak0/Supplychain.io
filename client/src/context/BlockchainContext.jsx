@@ -16,46 +16,61 @@ const BlockchainProvider = ({ children }) => {
 
     const checkIfWalletIsConnected = async () => {
         try {
-            if (!ethereum) return;
+            if (!ethereum) {
+                initializeContract(null);
+                return;
+            }
             const accounts = await ethereum.request({ method: 'eth_accounts' });
             if (accounts.length) {
                 setCurrentAccount(accounts[0]);
                 initializeContract(accounts[0]);
+            } else {
+                initializeContract(null);
             }
         } catch (error) {
             console.log(error);
+            initializeContract(null);
         }
     };
 
     const initializeContract = async (account) => {
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        const supplyChainContract = new ethers.Contract(contractAddress, contractABI, signer);
+        let signerOrProvider;
+        if (window.ethereum && account) {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            signerOrProvider = await provider.getSigner();
+        } else {
+            // Read-only provider for public tracking without MetaMask
+            signerOrProvider = new ethers.JsonRpcProvider('https://rpc.sepolia.org');
+        }
+        const supplyChainContract = new ethers.Contract(contractAddress, contractABI, signerOrProvider);
         setContract(supplyChainContract);
     };
 
     const checkNetwork = async () => {
+        if (!ethereum) return;
         const chainId = await ethereum.request({ method: 'eth_chainId' });
-        // Hardhat Localhost Chain ID is 31337 (0x7a69)
-        const hardhatChainId = '0x7a69';
+        // Hardhat Localhost Chain ID is 31337 (0x7a69), Sepolia is 11155111 (0xaa36a7)
+        // For remix deployment, we expect Sepolia. Thus check for Sepolia.
+        const sepoliaChainId = '0xaa36a7';
 
-        if (chainId !== hardhatChainId) {
+        if (chainId !== sepoliaChainId) {
             try {
                 await ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: hardhatChainId }],
+                    params: [{ chainId: sepoliaChainId }],
                 });
             } catch (switchError) {
-                // This error code indicates that the chain has not been added to MetaMask.
                 if (switchError.code === 4902) {
                     try {
                         await ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [
                                 {
-                                    chainId: hardhatChainId,
-                                    chainName: 'Hardhat Localhost',
-                                    rpcUrls: ['http://127.0.0.1:8545'],
+                                    chainId: sepoliaChainId,
+                                    chainName: 'Sepolia test network',
+                                    rpcUrls: ['https://rpc.sepolia.org'],
+                                    nativeCurrency: { name: 'Sepolia Ether', symbol: 'SEP', decimals: 18 },
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io']
                                 },
                             ],
                         });
@@ -63,7 +78,7 @@ const BlockchainProvider = ({ children }) => {
                         console.error(addError);
                     }
                 } else {
-                    alert("Please switch your MetaMask network to Localhost 8545 (Chain ID 31337).");
+                    alert("Please switch your MetaMask network to Sepolia.");
                 }
             }
         }
@@ -129,7 +144,7 @@ const BlockchainProvider = ({ children }) => {
                     window.location.reload(); // Reload to refresh state
                 } else {
                     setCurrentAccount('');
-                    setContract(null);
+                    initializeContract(null);
                 }
             });
 

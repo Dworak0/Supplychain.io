@@ -2,8 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
+import { BlockchainContext } from '../context/BlockchainContext';
+
 const Landing = () => {
     const navigate = useNavigate();
+    const { currentUser } = React.useContext(BlockchainContext);
 
     return (
         <div style={{
@@ -72,11 +75,11 @@ const Landing = () => {
                         style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}
                     >
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate(currentUser ? '/dashboard' : '/login')}
                             className="btn-modern"
                             style={{ minWidth: '200px' }}
                         >
-                            Get Started
+                            {currentUser ? 'Go to Dashboard' : 'Get Started'}
                         </button>
                         <button
                             onClick={() => navigate('/track')}
