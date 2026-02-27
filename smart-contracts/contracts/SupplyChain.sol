@@ -140,11 +140,24 @@ contract SupplyChain {
         products[_id].status = _status;
         products[_id].timestamp = block.timestamp;
         
-        // Add to history
+        // Add to history — lat/long here is the SENDER's location.
+        // The receiver should call confirmReceipt() to stamp their own location.
         productHistory[_id].push(History(_newOwner, _status, block.timestamp, _lat, _long));
         
         emit ProductTransferred(_id, previousOwner, _newOwner, _status);
     }
+
+    // Allows the current owner to update the GPS location of their latest history entry.
+    // Call this after receiving a product to stamp YOUR location (not the sender's).
+    function confirmReceipt(uint256 _id, string memory _lat, string memory _long) public {
+        require(_id > 0 && _id <= productCount, "Invalid product ID");
+        require(products[_id].currentOwner == msg.sender, "Not the current owner");
+
+        uint256 lastIdx = productHistory[_id].length - 1;
+        productHistory[_id][lastIdx].lat = _lat;
+        productHistory[_id][lastIdx].long = _long;
+    }
+
     
     function getProduct(uint256 _id) public view returns (Product memory) {
         return products[_id];

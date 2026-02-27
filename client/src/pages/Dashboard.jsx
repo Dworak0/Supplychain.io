@@ -273,6 +273,22 @@ const Dashboard = () => {
         document.getElementById('transfer-section')?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleConfirmReceipt = async (productId) => {
+        if (!contract) return alert('Contract not loaded');
+        try {
+            setLoading(true);
+            const location = await getLocation();
+            const tx = await contract.confirmReceipt(productId, location.lat, location.long);
+            await tx.wait();
+            alert('Receipt confirmed! Your location has been recorded on-chain.');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const downloadQR = (elementId, filename) => {
         const svg = document.getElementById(elementId);
         if (!svg) {
@@ -474,7 +490,7 @@ const Dashboard = () => {
                                         />
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                                         <button
                                             onClick={() => downloadQR(`qr-inventory-${item.id}`, `product-${item.id}-qr.svg`)}
                                             className="btn-modern"
@@ -482,6 +498,17 @@ const Dashboard = () => {
                                         >
                                             Download QR
                                         </button>
+                                        {/* Show Confirm Receipt for non-Manufacturers (they received the item, didn't create it) */}
+                                        {currentUser.role !== 'Manufacturer' && (
+                                            <button
+                                                onClick={() => handleConfirmReceipt(item.id)}
+                                                disabled={loading}
+                                                className="btn-secondary"
+                                                style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem' }}
+                                            >
+                                                📍 Confirm Receipt
+                                            </button>
+                                        )}
                                         {currentUser.role !== 'End User' && (
                                             <button onClick={() => selectItemForTransfer(item.id)} className="btn-modern" style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem' }}>Transfer</button>
                                         )}

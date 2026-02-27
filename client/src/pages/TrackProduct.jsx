@@ -205,17 +205,6 @@ const TrackProduct = () => {
                 };
             });
             const formattedHistory = await Promise.all(formattedHistoryPromises);
-
-            // FIX: The smart contract stores the SENDER's lat/long under the receiver's
-            // history entry (because transferProduct is called by the sender with their own location).
-            // So history[i].lat/long = the location of history[i-1]'s actor (the sender).
-            // Correct this by shifting: each actor's true location = the lat/long stored in
-            // the NEXT history entry (since the next person calls transfer FROM this person's location).
-            // The last entry has no next transfer yet, so it keeps its own stored coords.
-            for (let i = 0; i < formattedHistory.length - 1; i++) {
-                formattedHistory[i].lat = formattedHistory[i + 1].lat;
-                formattedHistory[i].long = formattedHistory[i + 1].long;
-            }
             setHistoryData(formattedHistory);
 
             if (scanMeta && (scanMeta.name || scanMeta.batchId)) {
