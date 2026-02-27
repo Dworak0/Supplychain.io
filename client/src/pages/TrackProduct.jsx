@@ -37,7 +37,7 @@ const LocationName = ({ lat, long }) => {
 
     useEffect(() => {
         if (!lat || !long || lat === "0" || long === "0") {
-            setName("Unknown Location");
+            setName(null); // null = not confirmed yet
             return;
         }
 
@@ -48,7 +48,6 @@ const LocationName = ({ lat, long }) => {
                 const data = await response.json();
 
                 if (data.address) {
-                    // Prioritize City, Town, Village, then County/State
                     const city = data.address.city || data.address.town || data.address.village || data.address.county;
                     const country = data.address.country;
                     setName(city ? `${city}, ${country}` : data.display_name.split(',').slice(0, 2).join(','));
@@ -62,8 +61,12 @@ const LocationName = ({ lat, long }) => {
         fetchName();
     }, [lat, long]);
 
+    if (name === null) {
+        return <span style={{ color: '#f59e0b', fontSize: '0.85rem', fontStyle: 'italic' }}>Awaiting confirmation</span>;
+    }
     return <span style={{ color: '#60a5fa' }}>{name}</span>;
 };
+
 
 const CertificateDisplay = ({ value }) => {
     if (!value) return <span style={{ color: '#64748b' }}>No certificate</span>;
@@ -442,9 +445,15 @@ const TrackProduct = () => {
                                         <h4 style={{ fontSize: '1.2rem', margin: '0.2rem 0', color: 'white' }}>
                                             {step.role} <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>({step.status})</span>
                                         </h4>
-                                        <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                                            📍 <LocationName lat={step.lat} long={step.long} />
-                                        </div>
+                                        {step.lat && step.lat !== '0' ? (
+                                            <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                                                📍 <LocationName lat={step.lat} long={step.long} />
+                                            </div>
+                                        ) : (
+                                            <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem', color: '#f59e0b', fontStyle: 'italic' }}>
+                                                📍 Awaiting confirmation
+                                            </div>
+                                        )}
                                         <p style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: '#64748b' }}>Wallet: {step.owner}</p>
                                     </div>
                                 ))}

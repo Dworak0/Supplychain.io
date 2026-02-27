@@ -254,7 +254,7 @@ const Dashboard = () => {
 
             if (!targetAddress) return alert("System Error: No target wallet provided");
 
-            const tx = await contract.transferProduct(productId, targetAddress, statusInt, location.lat, location.long);
+            const tx = await contract.transferProduct(productId, targetAddress, statusInt, "0", "0");
             await tx.wait();
 
             setLoading(false);
