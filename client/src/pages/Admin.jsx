@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { BlockchainContext } from '../context/BlockchainContext';
 import { motion } from 'framer-motion';
+import { API_URL } from '../utils/config';
 
 const Admin = () => {
     const { contract } = useContext(BlockchainContext);
@@ -18,13 +19,17 @@ const Admin = () => {
 
     const statusMap = ["Created", "In Transit", "In Warehouse", "Delivered"];
 
-    const getRoleFromAddress = (addr) => {
-        const lowerAddr = addr.toLowerCase();
-        if (lowerAddr === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266') return 'Manufacturer';
-        if (lowerAddr === '0x70997970c51812dc3a010c7d01b50e0d17dc79c8') return 'Warehouse';
-        if (lowerAddr === '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc') return 'Supplier';
-        if (lowerAddr === '0x90f79bf6eb2c4f870365e785982e1f101e93b906') return 'Retailer';
-        return 'End User';
+    const getRoleFromAddress = async (addr) => {
+        try {
+            const res = await fetch(`${API_URL}/api/users/${addr}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data.role || 'Unknown';
+            }
+        } catch (e) {
+            console.error('Role fetch error:', e);
+        }
+        return 'Unknown';
     };
 
     const fetchAllProducts = async () => {
@@ -37,7 +42,6 @@ const Admin = () => {
         setContractError('');
         try {
             const count = await contract.productCount();
-            const products = [];
             const statusCounts = {
                 total: Number(count),
                 created: 0,
@@ -46,49 +50,47 @@ const Admin = () => {
                 delivered: 0
             };
 
-            // Fetch all products
+            // Fetch all products and their owner roles in parallel
+            const productPromises = [];
             for (let i = 1; i <= Number(count); i++) {
-                try {
-                    const p = await contract.getProduct(i);
-                    const statusIndex = Number(p.status);
-                    const statusName = statusMap[statusIndex];
-
-                    // Count by status
-                    if (statusIndex === 0) statusCounts.created++;
-                    else if (statusIndex === 1) statusCounts.inTransit++;
-                    else if (statusIndex === 2) statusCounts.inWarehouse++;
-                    else if (statusIndex === 3) statusCounts.delivered++;
-
-                    products.push({
-                        id: p.id.toString(),
-                        name: p.name,
-                        batchId: p.batchId,
-                        currentOwner: p.currentOwner,
-                        ownerRole: getRoleFromAddress(p.currentOwner),
-                        status: statusIndex,
-                        statusName: statusName,
-                        timestamp: new Date(Number(p.timestamp) * 1000).toLocaleString(),
-                        image: p.ipfsHash
-                    });
-                } catch (err) {
-                    console.error(`Error fetching product ${i}:`, err);
-                }
+                productPromises.push(
+                    contract.getProduct(i).then(async (p) => {
+                        const statusIndex = Number(p.status);
+                        const ownerRole = await getRoleFromAddress(p.currentOwner);
+                        return {
+                            id: p.id.toString(),
+                            name: p.name,
+                            batchId: p.batchId,
+                            currentOwner: p.currentOwner,
+                            ownerRole,
+                            status: statusIndex,
+                            statusName: statusMap[statusIndex] || 'Unknown',
+                            timestamp: new Date(Number(p.timestamp) * 1000).toLocaleString(),
+                            image: p.ipfsHash
+                        };
+                    }).catch(err => {
+                        console.error(`Error fetching product ${i}:`, err);
+                        return null;
+                    })
+                );
             }
 
-            // Sort by ID (newest first)
+            const products = (await Promise.all(productPromises)).filter(Boolean);
+
+            products.forEach(p => {
+                if (p.status === 0) statusCounts.created++;
+                else if (p.status === 1) statusCounts.inTransit++;
+                else if (p.status === 2) statusCounts.inWarehouse++;
+                else if (p.status === 3) statusCounts.delivered++;
+            });
+
             products.sort((a, b) => Number(b.id) - Number(a.id));
 
             setAllProducts(products);
             setStats(statusCounts);
         } catch (error) {
             console.error("Error fetching products:", error);
-            if (error.code === 'BAD_DATA') {
-                setContractError(
-                    "Unable to read products. Make sure your MetaMask network is set to Localhost 8545 and the SupplyChain contract is deployed on the running Hardhat node."
-                );
-            } else {
-                setContractError("Error loading products: " + error.message);
-            }
+            setContractError("Error loading products: " + error.message);
         } finally {
             setLoading(false);
         }
