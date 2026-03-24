@@ -393,12 +393,12 @@ const TrackProduct = () => {
                             
                             <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text)' }}>Verification Document</h3>
                             
-                            <div style={{ width: '100%', background: '#000', borderRadius: '8px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-                                {viewingCert.toLowerCase().endsWith('.pdf') ? (
-                                    <iframe src={viewingCert} style={{ width: '100%', height: '60vh', border: 'none' }} title="Certificate Document" />
-                                ) : (
-                                    <img src={viewingCert} alt="Certificate Document" style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain' }} />
-                                )}
+                            <div style={{ width: '100%', background: '#fff', borderRadius: '8px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                                <iframe 
+                                    src={viewingCert} 
+                                    style={{ width: '100%', height: '65vh', border: 'none' }} 
+                                    title="Certificate Document" 
+                                />
                             </div>
                             
                             <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
