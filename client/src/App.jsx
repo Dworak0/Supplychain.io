@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Landing from './pages/Landing';
 import Admin from './pages/Admin';
 import { BlockchainContext } from './context/BlockchainContext';
+import FloatingBackground from './components/FloatingBackground';
 
 const ProtectedRoute = ({ children }) => {
   const { currentUser } = useContext(BlockchainContext);
@@ -21,6 +22,7 @@ function App() {
   return (
     <Router>
       <div className="App">
+        <FloatingBackground />
         <Navbar />
         <Routes>
           <Route path="/" element={<Landing />} />
