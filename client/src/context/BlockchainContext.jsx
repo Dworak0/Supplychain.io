@@ -40,7 +40,7 @@ const BlockchainProvider = ({ children }) => {
             signerOrProvider = await provider.getSigner();
         } else {
             // Read-only provider for public tracking without MetaMask
-            signerOrProvider = new ethers.JsonRpcProvider('https://rpc.sepolia.org');
+            signerOrProvider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com');
         }
         const supplyChainContract = new ethers.Contract(contractAddress, contractABI, signerOrProvider);
         setContract(supplyChainContract);

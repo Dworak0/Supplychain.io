@@ -167,6 +167,7 @@ const TrackProduct = () => {
             if (err.message === "PRODUCT_NOT_FOUND") {
                 setIsCounterfeit(true); setError("Counterfeit alert: This product ID does not exist on the blockchain.");
             } else {
+                console.error("fetchData error:", err);
                 setError("Unable to fetch product details. Please try again.");
             }
         } finally {
