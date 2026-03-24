@@ -3,6 +3,8 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
 require('dotenv').config();
 
 const app = express();
@@ -160,13 +162,47 @@ app.get('/api/users/:address', async (req, res) => {
     }
 });
 
-// Upload Endpoint
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// Upload Endpoint (IPFS via Pinata)
+app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).send('No file uploaded');
 
-        const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-        res.json({ imageUrl, filename: req.file.filename });
+        const pinataApiKey = process.env.PINATA_API_KEY;
+        const pinataSecretApiKey = process.env.PINATA_SECRET_API_KEY;
+
+        if (pinataApiKey && pinataSecretApiKey) {
+            // Found IPFS Keys. Uploading to Pinata...
+            const formData = new FormData();
+            formData.append('file', fs.createReadStream(req.file.path));
+
+            const pinataMetadata = JSON.stringify({ name: req.file.originalname });
+            formData.append('pinataMetadata', pinataMetadata);
+
+            const pinataOptions = JSON.stringify({ cidVersion: 1 });
+            formData.append('pinataOptions', pinataOptions);
+
+            const resPinata = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+                maxBodyLength: 'Infinity',
+                headers: {
+                    'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
+                    'pinata_api_key': pinataApiKey,
+                    'pinata_secret_api_key': pinataSecretApiKey
+                }
+            });
+
+            const ipfsHash = resPinata.data.IpfsHash;
+            const imageUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+
+            // Clean up the local temp server file since it's safe on IPFS now
+            try { fs.unlinkSync(req.file.path); } catch (e) { console.error("Could not delete local file", e); }
+
+            return res.json({ imageUrl, filename: req.file.originalname, ipfsHash });
+        } else {
+            // Fallback: Store locally if Pinata keys are missing
+            console.warn("No Pinata Keys Found. Falling back to local/ephemeral storage.");
+            const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            return res.json({ imageUrl, filename: req.file.filename });
+        }
     } catch (error) {
         console.error("Upload error:", error);
         res.status(500).send('Server Error: ' + error.message);

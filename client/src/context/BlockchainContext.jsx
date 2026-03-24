@@ -123,7 +123,8 @@ const BlockchainProvider = ({ children }) => {
                     (error) => {
                         console.error("Error getting location:", error);
                         resolve({ lat: "0", long: "0" }); // Default to 0,0 on error to allow flow to continue
-                    }
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             }
         });
