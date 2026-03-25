@@ -191,7 +191,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             });
 
             const ipfsHash = resPinata.data.IpfsHash;
-            const imageUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+            const imageUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
 
             // Clean up the local temp server file since it's safe on IPFS now
             try { fs.unlinkSync(req.file.path); } catch (e) { console.error("Could not delete local file", e); }

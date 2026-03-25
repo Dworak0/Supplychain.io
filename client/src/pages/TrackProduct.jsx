@@ -144,7 +144,7 @@ const TrackProduct = () => {
 
             const normalized = {
                 id: product.id.toString(), name: product.name, batchId: product.batchId,
-                owner: product.currentOwner, status: statusMap[Number(product.status)], image: product.ipfsHash
+                owner: product.currentOwner, status: statusMap[Number(product.status)], image: product.ipfsHash.replace('gateway.pinata.cloud', 'ipfs.io')
             };
             setProductData(normalized);
 

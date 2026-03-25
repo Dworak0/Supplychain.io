@@ -49,7 +49,7 @@ const Dashboard = () => {
                         id: p.id.toString(),
                         name: p.name,
                         batchId: p.batchId,
-                        image: p.ipfsHash,
+                        image: p.ipfsHash.replace('gateway.pinata.cloud', 'ipfs.io'),
                         status: p.status
                     });
                 }
