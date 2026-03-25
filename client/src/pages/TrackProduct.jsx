@@ -128,7 +128,7 @@ const TrackProduct = () => {
                 const matDetails = await contract.getRawMaterial(m.materialId);
                 materials.push({
                     name: matDetails.name, quantity: m.quantity.toString(), supplier: matDetails.supplier,
-                    certificate: matDetails.certificateHash, lat: matDetails.lat, long: matDetails.long
+                    certificate: matDetails.certificateHash.replace('gateway.pinata.cloud', 'ipfs.io'), lat: matDetails.lat, long: matDetails.long
                 });
             }
             setRawMaterials(materials);
